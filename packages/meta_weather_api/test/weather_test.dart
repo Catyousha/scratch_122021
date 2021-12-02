@@ -27,6 +27,9 @@ void main() {
               'predictability': 73
             }),
             isA<Weather>().having(
+              // w = objek json diatas
+              // 'abbr' = cuma label pas debugging
+              // WeatherState.unknown = nilai yang diharapkan
               (w) => w.weatherStateAbbr,
               'abbr',
               WeatherState.unknown,

@@ -7,6 +7,7 @@ class MockHttpClient extends Mock implements http.Client {}
 
 class MockResponse extends Mock implements http.Response {}
 
+// class Uri kosongan
 class FakeUri extends Fake implements Uri {}
 
 void main() {
@@ -14,10 +15,13 @@ void main() {
     late http.Client httpClient;
     late MetaWeatherApiClient metaWeatherApiClient;
 
+    // cuma di run sekali
     setUpAll(() {
+      // kalau dilemparkan matched any() dalam param bertipedata Uri, maka yang dipakai adalah FakeUri().
       registerFallbackValue(FakeUri());
     });
 
+    // di run tiap test
     setUp(() {
       httpClient = MockHttpClient();
       metaWeatherApiClient = MetaWeatherApiClient(httpClient: httpClient);
@@ -35,11 +39,14 @@ void main() {
         final response = MockResponse();
         when(() => response.statusCode).thenReturn(200);
         when(() => response.body).thenReturn('[]');
+
+        // apapun request getnya, returnnya adalah response diatas
         when(() => httpClient.get(any())).thenAnswer((_) async => response);
         try {
           await metaWeatherApiClient.locationSearch(query);
         } catch (_) {}
         verify(
+          // method .locationSearch(query) mengeksekusi command dibawah ini
           () => httpClient.get(
             Uri.https(
               'www.metaweather.com',
@@ -53,7 +60,11 @@ void main() {
       test('throws LocationIdRequestFailure on non-200 response', () async {
         final response = MockResponse();
         when(() => response.statusCode).thenReturn(400);
+
+        // apapun request getnya, returnnya adalah response diatas
         when(() => httpClient.get(any())).thenAnswer((_) async => response);
+        
+        // menguji kalau return 400 bakal di throw LocationIdRequestFailure
         expect(
           () async => await metaWeatherApiClient.locationSearch(query),
           throwsA(isA<LocationIdRequestFailure>()),
@@ -64,9 +75,13 @@ void main() {
         final response = MockResponse();
         when(() => response.statusCode).thenReturn(200);
         when(() => response.body).thenReturn('[]');
+
+        // apapun request getnya, returnnya adalah response diatas
         when(() => httpClient.get(any())).thenAnswer((_) async => response);
-        await expectLater(
-          metaWeatherApiClient.locationSearch(query),
+
+        // menguji kalau response.body [] bakal di throw LocationNotFoundFailure
+        expect(
+          () async => metaWeatherApiClient.locationSearch(query),
           throwsA(isA<LocationNotFoundFailure>()),
         );
       });
@@ -82,8 +97,14 @@ void main() {
             "woeid": 42
           }]''',
         );
+        
+        // apapun request getnya, returnnya adalah response diatas
         when(() => httpClient.get(any())).thenAnswer((_) async => response);
+
+        // karena metaWeatherApiClient menggunakan httpClient versi mocking, maka akan return response yang sama pula
         final actual = await metaWeatherApiClient.locationSearch(query);
+
+        // menguji apakah reponse dapat di decode menjadi model Location
         expect(
           actual,
           isA<Location>()
